@@ -14,6 +14,7 @@ const key = new RSA('-----BEGIN PUBLIC KEY-----\n' +
       encryptionScheme: {
         scheme: 'pkcs1',
         hash: 'sha256',
+        mgf: 'sha1', // use mgf sha1 padding
       },
     });
     const encrypt = key.encrypt(data, 'base64');

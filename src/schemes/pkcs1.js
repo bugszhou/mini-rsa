@@ -5,6 +5,7 @@
 var BigInteger = require('../libs/jsbn');
 var crypt = require('crypto');
 var constants = require('constants');
+var mgfPad = require('../libs/rsaOaepEncrypt');
 var SIGN_INFO_HEAD = {
   md2: Buffer.from('3020300c06082a864886f70d020205000410', 'hex'),
   md5: Buffer.from('3020300c06082a864886f70d020505000410', 'hex'),
@@ -69,29 +70,33 @@ module.exports.makeScheme = function(key, options) {
 
       return Buffer.concat([filled, buffer]);
     } else {
-      const $lHash = crypt.createHash('sha256').update('', 'utf8').digest();
+      if (this.options && this.options.encryptionSchemeOptions && this.options.encryptionSchemeOptions.mgf) {
+        const {mgf, hash} = this.options.encryptionSchemeOptions;
+        return mgfPad({
+          data: buffer,
+          mgf,
+          hash,
+          encryptedDataLength: this.encryptedDataLength
+        });
+      }
       /* random padding for public key encrypt */
-      filled = Buffer.alloc(this.key.encryptedDataLength - buffer.length - (2 * 32) - 2);
-      var rand = this.randomBytes(32);
+      filled = Buffer.alloc(this.key.encryptedDataLength - buffer.length);
+      filled[0] = 0;
+      filled[1] = 2;
+      var rand = crypt.randomBytes(filled.length - 3);
       for (var i = 0; i < rand.length; i++) {
         var r = rand[i];
         while (r === 0) { // non-zero only
-          r = this.randomBytes(1)[0];
+          r = crypt.randomBytes(1)[0];
         }
-        rand[i] = r;
+        filled[i + 2] = r;
       }
-      let $db = Buffer.concat([$lHash, filled, Buffer.from(String.fromCharCode(1)), buffer]);
-      let $dbMask = this._mgf1(rand, this.key.encryptedDataLength - 32 - 1);
-      let $maskedDB = Buffer.from(this.binToHex(this.yihuo(this.hexToBin($db.toString('hex')), this.hexToBin($dbMask.toString('hex')))), 'hex');
-      let $seedMask = this._mgf1($maskedDB, 32);
-      let $maskedSeed = Buffer.from(this.binToHex(this.yihuo(this.hexToBin(rand.toString('hex')), this.hexToBin($seedMask.toString('hex')))), 'hex');
-      let $em = Buffer.concat([Buffer.from(String.fromCharCode(0)), $maskedSeed, $maskedDB]);
-
-      return $em;
+      filled[filled.length - 1] = 0;
+      return Buffer.concat([filled, buffer]);
     }
   };
 
-  Scheme.prototype.yihuo = function (bin1, bin2) {
+  Scheme.prototype.yihuo = function(bin1, bin2) {
     return bin1.split('').map((bit, i) => {
       if (bit !== bin2[i]) {
         return 1;
@@ -100,14 +105,20 @@ module.exports.makeScheme = function(key, options) {
     }).join('');
   };
 
-  Scheme.prototype.hexToBin = function (str) {
-    let hex_array = [{key:0,val:"0000"},{key:1,val:"0001"},{key:2,val:"0010"},{key:3,val:"0011"},{key:4,val:"0100"},{key:5,val:"0101"},{key:6,val:"0110"},{key:7,val:"0111"},
-      {key:8,val:"1000"},{key:9,val:"1001"},{key:'a',val:"1010"},{key:'b',val:"1011"},{key:'c',val:"1100"},{key:'d',val:"1101"},{key:'e',val:"1110"},{key:'f',val:"1111"}]
+  Scheme.prototype.hexToBin = function(str) {
+    let hex_array = [{key: 0, val: "0000"}, {key: 1, val: "0001"}, {key: 2, val: "0010"}, {
+      key: 3,
+      val: "0011"
+    }, {key: 4, val: "0100"}, {key: 5, val: "0101"}, {key: 6, val: "0110"}, {key: 7, val: "0111"},
+      {key: 8, val: "1000"}, {key: 9, val: "1001"}, {key: 'a', val: "1010"}, {key: 'b', val: "1011"}, {
+        key: 'c',
+        val: "1100"
+      }, {key: 'd', val: "1101"}, {key: 'e', val: "1110"}, {key: 'f', val: "1111"}]
 
-    let value=""
-    for(let i=0;i<str.length;i++){
-      for(let j=0;j<hex_array.length;j++){
-        if(str.charAt(i)== hex_array[j].key){
+    let value = ""
+    for (let i = 0; i < str.length; i++) {
+      for (let j = 0; j < hex_array.length; j++) {
+        if (str.charAt(i) == hex_array[j].key) {
           value = value.concat(hex_array[j].val)
           break;
         }
@@ -117,14 +128,20 @@ module.exports.makeScheme = function(key, options) {
   };
 
 
-  Scheme.prototype.binToHex = function (str) {
-    let hex_array = [{key:0,val:"0000"},{key:1,val:"0001"},{key:2,val:"0010"},{key:3,val:"0011"},{key:4,val:"0100"},{key:5,val:"0101"},{key:6,val:"0110"},{key:7,val:"0111"},
-      {key:8,val:"1000"},{key:9,val:"1001"},{key:'a',val:"1010"},{key:'b',val:"1011"},{key:'c',val:"1100"},{key:'d',val:"1101"},{key:'e',val:"1110"},{key:'f',val:"1111"}]
+  Scheme.prototype.binToHex = function(str) {
+    let hex_array = [{key: 0, val: "0000"}, {key: 1, val: "0001"}, {key: 2, val: "0010"}, {
+      key: 3,
+      val: "0011"
+    }, {key: 4, val: "0100"}, {key: 5, val: "0101"}, {key: 6, val: "0110"}, {key: 7, val: "0111"},
+      {key: 8, val: "1000"}, {key: 9, val: "1001"}, {key: 'a', val: "1010"}, {key: 'b', val: "1011"}, {
+        key: 'c',
+        val: "1100"
+      }, {key: 'd', val: "1101"}, {key: 'e', val: "1110"}, {key: 'f', val: "1111"}]
     let value = ''
-    let list=[]
-    if(str.length%4!==0){
+    let list = []
+    if (str.length % 4 !== 0) {
       let a = "0000"
-      let b=a.substring(0,4-str.length%4)
+      let b = a.substring(0, 4 - str.length % 4)
       str = b.concat(str)
     }
     while (str.length > 4) {
@@ -132,9 +149,9 @@ module.exports.makeScheme = function(key, options) {
       str = str.substring(4);
     }
     list.push(str)
-    for(let i=0;i<list.length;i++){
-      for(let j=0;j<hex_array.length;j++){
-        if(list[i]==hex_array[j].val){
+    for (let i = 0; i < list.length; i++) {
+      for (let j = 0; j < hex_array.length; j++) {
+        if (list[i] == hex_array[j].val) {
           value = value.concat(hex_array[j].key)
           break
         }
@@ -145,12 +162,11 @@ module.exports.makeScheme = function(key, options) {
 
   Scheme.prototype._mgf1 = function($mgfSeed, $maskLen) {
     const mgfHLen = 20;
-    const crypto = require('crypto');
     let $t = [];
     const $count = Math.ceil($maskLen / mgfHLen);
     for (let $i = 0; $i < $count; $i++) {
       let $c = this.unsignedLongBuffer($i);
-      $t.push(crypto.createHash('sha1').update(Buffer.concat([$mgfSeed, $c]), 'hex').digest());
+      $t.push(crypt.createHash('sha1').update(Buffer.concat([$mgfSeed, $c]), 'hex').digest());
     }
     $t = Buffer.alloc($maskLen, Buffer.concat($t));
     return $t;
@@ -198,7 +214,7 @@ module.exports.makeScheme = function(key, options) {
     }
     return bytes;
   }
-  Scheme.prototype.getRandomValues = function (ar) {
+  Scheme.prototype.getRandomValues = function(ar) {
     for (var i = 0; i < ar.length; i++) {
       ar[i] = Math.floor(256 * Math.random());
     }
