@@ -1,0 +1,5 @@
+scripts/**/*.js
+node_modules/*.js
+src/lib/**/*.js
+rollup.config.es5.js
+rollup.config.js

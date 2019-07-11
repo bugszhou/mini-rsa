@@ -1,5 +1,7 @@
-# mini-rsa
-小程序rsa加密
+## mini-rsa
+----------------------------
+author: bugszhou | Email:bugszhou@outlook.com <br>
+description: 小程序rsa加密
 
 ###usage
 
