@@ -1,6 +1,6 @@
 {
     "name": "mini-rsa",
-    "version": "1.0.13",
+    "version": "1.0.14",
     "description": "A lib project with ziu",
     "author": "bugszhou | Email:bugszhou@outlook.com",
     "main": "index.js",
