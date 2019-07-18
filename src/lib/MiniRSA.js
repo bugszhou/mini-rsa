@@ -19,7 +19,7 @@ if (typeof constants.RSA_NO_PADDING === "undefined") {
     constants.RSA_NO_PADDING = 3;
 }
 
-export default (function () {
+module.exports = (function () {
     var SUPPORTED_HASH_ALGORITHMS = {
         node10: ['md4', 'md5', 'ripemd160', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
         node: ['md4', 'md5', 'ripemd160', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'],
