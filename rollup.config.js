@@ -9,6 +9,7 @@ import { terser } from "rollup-plugin-terser";
 
 export default {
   input: 'src/entry/index.js',
+  external: ['create-hash'],
   output: [
     // umd，第三方依赖未打包
     {
@@ -51,4 +52,8 @@ export default {
       include: [/^.+\.common\.js$/],
     }),
   ],
+  watch: {
+    clearScreen: true,
+    include: 'src/**',
+  },
 };

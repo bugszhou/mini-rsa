@@ -1,12 +1,13 @@
 {
     "name": "mini-rsa",
-    "version": "1.0.14",
+    "version": "1.0.15",
     "description": "A lib project with ziu",
     "author": "bugszhou | Email:bugszhou@outlook.com",
     "main": "index.js",
     "module": "dist/mini-rsa.esm.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
+        "dev": "rollup -c rollup.config.js --watch --environment NODE_ENV:development",
         "build": "npm run build:esm & npm run build:es5",
         "build:esm": "rollup -c rollup.config.js --environment NODE_ENV:production",
         "build:es5": "rollup -c rollup.config.es5.js --environment NODE_ENV:production",
@@ -26,9 +27,6 @@
     "dependencies": {
         "@babel/runtime": "^7.5.4",
         "@babel/runtime-corejs2": "^7.5.4",
-        "assert": "^2.0.0",
-        "buffer": "^5.2.1",
-        "constants": "0.0.2",
         "create-hash": "^1.2.0"
     },
     "devDependencies": {
