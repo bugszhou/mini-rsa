@@ -7,7 +7,7 @@ import builtins from 'rollup-plugin-node-builtins';
 import { terser } from "rollup-plugin-terser";
 
 export default {
-  external: ['assert', 'buffer', 'constants', 'create-hash', 'crypto'],
+  external: ['assert', 'buffer', 'constants', 'create-hash'],
   input: 'src/entry/index.js',
   output: [
     // umd，第三方依赖未打包
